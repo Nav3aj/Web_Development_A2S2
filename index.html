@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Async Weather Tracker</title>
+    <link rel="stylesheet" href="index.css">
+</head>
+
+<body>
+    <header>
+        <h1>
+            <img class="logo" src="img1.png" alt="">
+            Async Weather Tracker
+        </h1>
+    </header>
+    <main>
+        <div id="card1">
+            <div id="card2">
+                <h2>Search City</h2>
+                <input type="text" id="search" placeholder="search">
+                <button id="btn">Search</button>
+                <div id="div1">Search History</div>
+            </div>
+            <div id="card3">
+                <h2>
+                    Weather Information
+                </h2>
+            </div>
+        </div>
+        <div id="card4">
+            <div>
+                Console -- Event Loop
+            </div>
+            <div id="card5">
+            
+            </div>
+        </div>
+    </main>
+</body>
+
+</html>
+<script>
+    const eventsContainer = document.getElementById("card5");
+
+    document.getElementById("btn").addEventListener("click", function () {
+        card5.innerHTML = `
+      <span class="card">
+        <p>1. Sync Start</p>
+        <p>2. Sync End</p>
+        <p>[ASync] Start fetching</p>
+        <p>3. Promise.then {Microtask}</p>
+        <p>4. setTimeout {Macrotask}</p>
+      </span>
+    `;
+    });
+
+
+
+    
+</script>
