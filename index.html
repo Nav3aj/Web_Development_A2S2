@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Async Weather Tracker</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="index.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 
@@ -52,7 +52,7 @@
         const searchBtn = document.getElementById('searchBtn');
         const cityInput = document.getElementById('cityInput');
 
-        // DOM Elements
+        
         const cityNameEl = document.getElementById('cityName');
         const temperatureEl = document.getElementById('temperature');
         const windSpeedEl = document.getElementById('windSpeed');
@@ -71,19 +71,19 @@
             cityNameEl.textContent = "Analyzing Skies...";
 
             try {
-                // 1. Geocoding
+               
                 const geoRes = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=1&language=en&format=json`);
                 const geoData = await geoRes.json();
                 if (!geoData.results) throw new Error("Location not found.");
 
                 const { latitude, longitude, name, country } = geoData.results[0];
 
-                // 2. Fetch Weather (Current + Hourly for Rain Probability)
+                
                 const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m,wind_speed_10m,weather_code&hourly=precipitation_probability&timezone=auto`;
                 const weatherRes = await fetch(weatherUrl);
                 const weatherData = await weatherRes.json();
 
-                // 3. Extract Rain Probability for the CURRENT hour
+                
                 const currentHourIndex = new Date().getHours();
                 const rainProbability = weatherData.hourly.precipitation_probability[currentHourIndex];
 
@@ -101,10 +101,10 @@
             windSpeedEl.textContent = `${current.wind_speed_10m} km/h`;
             humidityEl.textContent = `${current.relative_humidity_2m} %`;
 
-            // Set Rain Chance
+            
             rainChanceEl.textContent = `${rainProb}%`;
 
-            // Dynamic Rain Prediction Logic
+            
             let prediction = "";
             if (rainProb > 70) {
                 prediction = "High chance of rain. Carry an umbrella!";
@@ -114,12 +114,11 @@
                 prediction = "Unlikely to rain anytime soon.";
             }
 
-            // Combine WMO Code description with Rain prediction
+            
             const weatherCodes = { 0: "Clear", 1: "Mainly Clear", 2: "Partly Cloudy", 3: "Overcast" };
             const baseDesc = weatherCodes[current.weather_code] || "Cloudy";
             weatherDescEl.innerHTML = `${baseDesc}<br><span style="color: #38bdf8; font-size: 0.9rem;">${prediction}</span>`;
 
-            // Update Icon
             weatherIconEl.className = rainProb > 40 ? "fa-solid fa-cloud-showers-heavy" : "fa-solid fa-cloud-sun";
         }
     </script>
