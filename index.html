@@ -5,58 +5,124 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Async Weather Tracker</title>
-    <link rel="stylesheet" href="index.css">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 
 <body>
-    <header>
-        <h1>
-            <img class="logo" src="img1.png" alt="">
-            Async Weather Tracker
-        </h1>
-    </header>
-    <main>
-        <div id="card1">
-            <div id="card2">
-                <h2>Search City</h2>
-                <input type="text" id="search" placeholder="search">
-                <button id="btn">Search</button>
-                <div id="div1">Search History</div>
+    <div class="dashboard">
+        <header class="header">
+            <h1>Async Weather<span>Tracker</span></h1>
+            <div class="search-box">
+                <input type="text" id="cityInput" placeholder="Search city (e.g., Berlin, Tokyo)...">
+                <button id="searchBtn"><i class="fa-solid fa-magnifying-glass"></i></button>
             </div>
-            <div id="card3">
-                <h2>
-                    Weather Information
-                </h2>
+        </header>
+
+        <main class="weather-container">
+            <div class="main-card glass-panel">
+                <h2 id="cityName">Enter a city</h2>
+                <div class="temp-display">
+                    <i id="weatherIcon" class="fa-solid fa-cloud"></i>
+                    <span id="temperature">--°C</span>
+                </div>
+                <p id="weatherDesc">Awaiting input...</p>
             </div>
-        </div>
-        <div id="card4">
-            <div>
-                Console -- Event Loop
+
+            <div class="metrics-grid">
+                <div class="metric-card glass-panel">
+                    <i class="fa-solid fa-wind"></i>
+                    <h3>Wind Speed</h3>
+                    <p id="windSpeed">-- km/h</p>
+                </div>
+                <div class="metric-card glass-panel">
+                    <i class="fa-solid fa-droplet"></i>
+                    <h3>Humidity</h3>
+                    <p id="humidity">-- %</p>
+                </div>
+                <div class="metric-card glass-panel">
+                    <i class="fa-solid fa-cloud-showers-heavy"></i>
+                    <h3>Rain Chance</h3>
+                    <p id="rainChance">-- %</p>
+                </div>
             </div>
-            <div id="card5">
-            
-            </div>
-        </div>
-    </main>
+        </main>
+    </div>
+    <script>
+        const searchBtn = document.getElementById('searchBtn');
+        const cityInput = document.getElementById('cityInput');
+
+        // DOM Elements
+        const cityNameEl = document.getElementById('cityName');
+        const temperatureEl = document.getElementById('temperature');
+        const windSpeedEl = document.getElementById('windSpeed');
+        const humidityEl = document.getElementById('humidity');
+        const rainChanceEl = document.getElementById('rainChance'); // New element
+        const weatherDescEl = document.getElementById('weatherDesc');
+        const weatherIconEl = document.getElementById('weatherIcon');
+
+        searchBtn.onclick = () => initiateSearch();
+        cityInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') initiateSearch(); });
+
+        async function initiateSearch() {
+            const query = cityInput.value.trim();
+            if (!query) return;
+
+            cityNameEl.textContent = "Analyzing Skies...";
+
+            try {
+                // 1. Geocoding
+                const geoRes = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=1&language=en&format=json`);
+                const geoData = await geoRes.json();
+                if (!geoData.results) throw new Error("Location not found.");
+
+                const { latitude, longitude, name, country } = geoData.results[0];
+
+                // 2. Fetch Weather (Current + Hourly for Rain Probability)
+                const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m,wind_speed_10m,weather_code&hourly=precipitation_probability&timezone=auto`;
+                const weatherRes = await fetch(weatherUrl);
+                const weatherData = await weatherRes.json();
+
+                // 3. Extract Rain Probability for the CURRENT hour
+                const currentHourIndex = new Date().getHours();
+                const rainProbability = weatherData.hourly.precipitation_probability[currentHourIndex];
+
+                updateUI(`${name}, ${country}`, weatherData.current, rainProbability);
+
+            } catch (err) {
+                cityNameEl.textContent = "Error";
+                weatherDescEl.textContent = err.message;
+            }
+        }
+
+        function updateUI(location, current, rainProb) {
+            cityNameEl.textContent = location;
+            temperatureEl.textContent = `${Math.round(current.temperature_2m)}°C`;
+            windSpeedEl.textContent = `${current.wind_speed_10m} km/h`;
+            humidityEl.textContent = `${current.relative_humidity_2m} %`;
+
+            // Set Rain Chance
+            rainChanceEl.textContent = `${rainProb}%`;
+
+            // Dynamic Rain Prediction Logic
+            let prediction = "";
+            if (rainProb > 70) {
+                prediction = "High chance of rain. Carry an umbrella!";
+            } else if (rainProb > 30) {
+                prediction = "Possible light showers expected.";
+            } else {
+                prediction = "Unlikely to rain anytime soon.";
+            }
+
+            // Combine WMO Code description with Rain prediction
+            const weatherCodes = { 0: "Clear", 1: "Mainly Clear", 2: "Partly Cloudy", 3: "Overcast" };
+            const baseDesc = weatherCodes[current.weather_code] || "Cloudy";
+            weatherDescEl.innerHTML = `${baseDesc}<br><span style="color: #38bdf8; font-size: 0.9rem;">${prediction}</span>`;
+
+            // Update Icon
+            weatherIconEl.className = rainProb > 40 ? "fa-solid fa-cloud-showers-heavy" : "fa-solid fa-cloud-sun";
+        }
+    </script>
 </body>
 
 </html>
-<script>
-    const eventsContainer = document.getElementById("card5");
-
-    document.getElementById("btn").addEventListener("click", function () {
-        card5.innerHTML = `
-      <span class="card">
-        <p>1. Sync Start</p>
-        <p>2. Sync End</p>
-        <p>[ASync] Start fetching</p>
-        <p>3. Promise.then {Microtask}</p>
-        <p>4. setTimeout {Macrotask}</p>
-      </span>
-    `;
-    });
-
-
-
-    
-</script>
